@@ -1,0 +1,1 @@
+# VBA-for-preparing-file-and-sending-reminders-with-recipients-taken-from-cell-range
