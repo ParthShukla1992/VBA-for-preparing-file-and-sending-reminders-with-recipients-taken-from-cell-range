@@ -1,0 +1,85 @@
+Public emailto As Range
+Public lastrowtemp As Integer
+
+
+Sub IConfOutreach()
+
+Dim lastfiledate As Variant
+    lastfiledate = InputBox("Give me last file's date in mmddyyyy")
+    Application.EnableEvents = True
+    Workbooks.Open Filename:= _
+        "C:\Users\"user.name"\xxx\xxx_" & lastfiledate & ".xlsm", _
+        UpdateLinks:=False
+    Dim lastfilename As Variant
+    lastfilename = "xxx_" & lastfiledate & ".xlsm"
+    Sheets("Raw Data").Select
+    Range("A1").Select
+    If ActiveSheet.AutoFilterMode Then 'autofilter is 'on'
+    On Error Resume Next   'turn off error reporting
+    ActiveSheet.ShowAllData
+    On Error GoTo 0   'turn error reporting back on
+    End If
+    Columns.EntireColumn.Hidden = False 'unhide columns and rows
+    Rows.EntireRow.Hidden = False
+    Cells(1, 36).Select
+    Cells(1, 36).value = "Outreach " & Date
+    ActiveCell.Offset(1, 0).Select
+    
+    ActiveCell.FormulaR1C1 = _
+        "=VLOOKUP(RC[-35],CurrentConfirmationReport.xlsx!R5C1:R30000C10,10,0)"
+    Range("AH3").Select
+    Selection.End(xlDown).Select
+    Dim lastrowvalue As Integer
+    lastrowvalue = Selection.Row
+    Range("AJ" & lastrowvalue).Select
+    Range(Selection, Selection.End(xlUp)).Select
+    Selection.FillDown
+    Range("AJ1").Select
+    ActiveSheet.Range("$A$1:$AJ$30000").AutoFilter Field:=36, Criteria1:= _
+        "Unsigned"
+        Range("AG1").Select
+    ActiveSheet.Range("$A$1:$AJ$30000").AutoFilter Field:=33, Criteria1:= _
+        ""
+        Range("AF1").Select
+    ActiveSheet.Range("$A$1:$AJ$30000").AutoFilter Field:=32, Criteria1:= _
+        ""
+    Range("R1").Select
+    ActiveSheet.Range("$A$1:$AJ$30000").AutoFilter Field:=18, Criteria1:="<>0", _
+        Operator:=xlAnd, Criteria2:="<>1", Criteria3:="<>2"
+    Range("N1").Select
+    ActiveSheet.Range("$A$1:$AJ$30000").AutoFilter Field:=14, Criteria1:= _
+        "<>"
+    Sheets.Add ("temp")
+    Worksheets("Raw Data").AutoFilter.Range.Copy Range("A1")
+    Range("A1").Select
+    Selection.End(xlDown).Select
+    lastrowtemp = Selection.Row
+    Call outlookemail
+
+End Sub
+Sub outlookemail()
+'Tools-Reference-You have check "MICROSOFT OUTLOOK 14.0 OBJECT LIBRARY"
+
+  Dim OutlookApp As Object
+  Dim OutlookMail As Object
+  
+  Set emailto = Worksheets("temp").Range("N2:N" & lastrowtemp)
+
+
+  Set OutlookApp = CreateObject("Outlook.Application")
+  Set OutlookMail = OutlookApp.CreateItem(o)
+  
+  With OutlookMail
+    .Display
+    .HTMLBody = OutlookApp.CreateItemFromTemplate("full path of template.oft")
+    'last .HTMLBody can include signature from the outlook.
+'<br> includes line breaks b/w two lines
+    On Error Resume Next
+    .CC = "email1;email2"
+    .Bcc = emailto
+    .Subject = "xxx"
+    '.Attachments = ThisWorkbook
+    '.Send
+  End With
+
+End Sub
